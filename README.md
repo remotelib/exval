@@ -29,7 +29,15 @@ class Counter {
   }
 }
 
-module.exports = new Counter(100);
+// create a counter instance
+const c1 = new Counter(100);
+
+// update the counter and add some custom properties
+c1.inc(2);
+c1.foo = 'bar';
+
+// export only the counter instance
+module.exports = c1;
 ```
 
 Now lets play with *exval*:
@@ -37,18 +45,13 @@ Now lets play with *exval*:
 // File: "index.js"
 
 const Exval = require('exval'); // require this class
-const c1 = require('./counter'); // get the counter from counter.js file
+const c1 = require('./counter'); // get c1 from file "counter.js"
 
-// notice that `Counter` is undefined in this file
+// notice that `c1` exsits but `Counter` is undefined in this file
 assert.equal(typeof Counter, 'undefined');
 
 // create a new exval instance
 const exval = new Exval();
-
-
-// update the counter and add some custom properties
-c1.inc(2);
-c1.foo = 'bar';
 
 // generate the counter instance code and run it
 const output = exval.stringify(c1);
