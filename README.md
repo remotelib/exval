@@ -14,27 +14,37 @@ Many features may not work, throws exceptions or works partly.  If you find a bu
 
 ## Example
 
+Consider the following `Counter` class:
+
 ```js
-const Exval = require('exval');
-const exval = new Exval();
+// File: "counter.js"
 
-// create a counter instance
-const c1 = (() => {
-  class Counter {
-    constructor(init) {
-      this.counter = init;
-    }
-
-    inc(a) {
-      this.counter += a;
-    }
+class Counter {
+  constructor(init) {
+    this.counter = init;
   }
 
-  return new Counter(100);
-})();
+  inc(a) {
+    this.counter += a;
+  }
+}
 
-// Counter class is undefined outside the closure
+module.exports = new Counter(100);
+```
+
+Now lets play with *exval*:
+```js
+// File: "index.js"
+
+const Exval = require('exval'); // require this class
+const c1 = require('./counter'); // get the counter from counter.js file
+
+// notice that `Counter` is undefined in this file
 assert.equal(typeof Counter, 'undefined');
+
+// create a new exval instance
+const exval = new Exval();
+
 
 // update the counter and add some custom properties
 c1.inc(2);
@@ -44,7 +54,7 @@ c1.foo = 'bar';
 const output = exval.stringify(c1);
 const c2 = eval(`(${output})`);
 
-// Counter class is still undefined  but our counter cloned successfully
+// Counter class is still undefined but our counter cloned successfully
 assert.equal(typeof Counter, 'undefined');
 assert.equal(c2.counter, c1.counter);
 assert.equal(c2.foo, c1.foo);
