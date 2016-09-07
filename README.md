@@ -44,8 +44,8 @@ Now lets play with *exval*:
 ```js
 // File: "index.js"
 
-const Exval = require('exval'); // require this class
-const c1 = require('./counter'); // get c1 from file "counter.js"
+const Exval = require('exval'); // require exval
+const c1 = require('./counter'); // get `c1` from file "counter.js"
 
 // notice that `c1` exsits but `Counter` is undefined in this file
 assert.equal(typeof Counter, 'undefined');
