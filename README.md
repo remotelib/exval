@@ -6,7 +6,12 @@
 [![npm](https://img.shields.io/npm/l/exval.svg)](LICENSE)
 
 
-[exval](https://npmjs.org/package/exval) Allows `uneval` JavaScript objects including functions and classes and run it on other machine.
+[exval](https://npmjs.org/package/exval) allows `uneval` JavaScript objects back to source code (including functions and classes!). This allows making shallow copy of an object and recreate it on other machine.
+
+**WARNING: This library is under development.**
+Many features may not work or works partly.
+
+Please open an issue if you find a bug and consider contributing to this project.
 
 
 ## Example
@@ -53,6 +58,50 @@ assert.equal(c2.counter, 103);
 // the original counter stay the same
 assert.equal(c1.counter, 102);
 ```
+
+
+## Limitations
+
+### Global Vars
+
+*exvar* will not copy outer scope variables that has been used in your code (including globals and environment variables).
+ It's **your responsibility** to make sure that all the globals variables are correctly copied and transferred between yours machines.
+ 
+```
+let glob = 1;
+ 
+function counter() {
+  return glob++;
+}
+ 
+const output = exval.stringify(counter);
+
+console.log(output); // prints 'function counter() {\nreturn glob++;\n}'
+                     // notice that the variable `glob` has been ommited
+``` 
+
+
+### Closures
+
+*exvar* can't access variables in your inner closure. Therefore it's **your responsibility** to regenerate them before you use the generated code.
+ 
+```
+const inc = (() => {
+  let counter = 0;
+  
+  return () => counter++;
+})();
+
+console.log(inc()) // "0"
+console.log(inc()) // "1"
+console.log(typeof counter) // "undefined"
+ 
+const output = exval.stringify(inc);
+
+console.log(output); // prints '() => counter++'
+                     // notice the lack of the private variable `counter`
+```
+
 
 ## License
 

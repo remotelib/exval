@@ -9,7 +9,10 @@
     "json",
     "function",
     "class",
-    "prototype"
+    "prototype",
+    "shallow",
+    "copy",
+    "snippet"
   ],
   "main": "exval.js",
   "engines": {
