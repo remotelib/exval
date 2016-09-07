@@ -76,7 +76,7 @@ assert.equal(c1.counter, 102);
 ### Global Vars
 
 *exvar* will not copy outer scope variables that has been used in your code (including globals and environment variables).
- It's **your responsibility** to make sure that all the globals variables are correctly copied and transferred between yours machines.
+ It's **your responsibility** to make sure that all the globals variables are correctly copied and transferred between your machines.
  
 ```js
 let glob = 1;
