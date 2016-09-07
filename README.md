@@ -47,7 +47,7 @@ Now lets play with *exval*:
 const Exval = require('exval'); // require exval
 const c1 = require('./counter'); // get `c1` from file "counter.js"
 
-// notice that `c1` exsits but `Counter` is undefined in this file
+// notice that `c1` exists but `Counter` is undefined in this file
 assert.equal(typeof Counter, 'undefined');
 
 // create a new exval instance
