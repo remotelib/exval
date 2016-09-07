@@ -9,9 +9,7 @@
 [exval](https://npmjs.org/package/exval) allows `uneval` JavaScript objects back to source code (including functions and classes!). This allows making shallow copy of an object and recreate it on other machine.
 
 **WARNING: This library is under development.**
-Many features may not work or works partly.
-
-Please open an issue if you find a bug and consider contributing to this project.
+Many features may not work, throws exceptions or works partly.  If you find a bug, please open an issue or consider contributing to this project.
 
 
 ## Example
@@ -67,7 +65,7 @@ assert.equal(c1.counter, 102);
 *exvar* will not copy outer scope variables that has been used in your code (including globals and environment variables).
  It's **your responsibility** to make sure that all the globals variables are correctly copied and transferred between yours machines.
  
-```
+```js
 let glob = 1;
  
 function counter() {
@@ -83,9 +81,9 @@ console.log(output); // prints 'function counter() {\nreturn glob++;\n}'
 
 ### Closures
 
-*exvar* can't access variables in your inner closure. Therefore it's **your responsibility** to regenerate them before you use the generated code.
+*exvar* [can't access](http://stackoverflow.com/questions/4472529/accessing-variables-trapped-by-closure) variables in your inner closure. Therefore it's **your responsibility** to regenerate them before you can use the generated code.
  
-```
+```js
 const inc = (() => {
   let counter = 0;
   
