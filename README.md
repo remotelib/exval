@@ -116,7 +116,7 @@ console.log(output); // prints '() => counter++'
 
 ### The `supper` Keyword
 
-It's impossible to know a method parent class outside the class context. Therefore, calling methods that using `super` will fail to run.
+It's impossible to know a method parent class outside the class context. Therefore, calling methods that using the `super` keyword will fail to run.
  
 ```js
 class Foo {
