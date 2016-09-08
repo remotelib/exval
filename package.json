@@ -19,7 +19,7 @@
     "node": ">=6.0.0"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "./node_modules/.bin/mocha"
   },
   "author": "Moshe Simantov <ms@development.co.il> (https://github.com/moshest)",
   "license": "MIT",
