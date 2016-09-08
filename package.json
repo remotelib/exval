@@ -1,6 +1,6 @@
 {
   "name": "exval",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Allows uneval JavaScript objects including functions and classes and run it on other machine.",
   "keywords": [
     "uneval",
