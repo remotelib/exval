@@ -116,7 +116,7 @@ console.log(output); // prints '() => counter++'
 
 ### The `supper` Keyword
 
-It's impossible to access the method parent class without specifying explicitly the method class parent. Therefore using reference to methods with `super` class with fail to run.
+It's impossible to know a method parent class outside the class context. Therefore, calling methods that using `super` will fail to run.
  
 ```js
 class Foo {
@@ -133,7 +133,7 @@ class FooBar extends Foo {
 
 // create shallow copy of the method `getName` 
 const output = exval.stringify(FooBar.prototype.getName);
-const getFooBarName = eval(`(${code})`); // throws "SyntaxError: 'super' keyword unexpected here"
+const getFooBarName = eval(`(${output})`); // throws "SyntaxError: 'super' keyword unexpected here"
 ```
 
 ## License
