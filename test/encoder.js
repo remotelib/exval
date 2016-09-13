@@ -131,4 +131,30 @@ describe('encoder', () => {
     // TODO test for classes
     // TODO test for props
   });
+
+  describe('.closureName', () => {
+    it('should work at 0', () => {
+      assert.equal(encoder.closureName(0), 'a');
+    });
+
+    it('should work at 1', () => {
+      assert.equal(encoder.closureName(1), 'b');
+    });
+
+    it('should work at 25', () => {
+      assert.equal(encoder.closureName(25), 'z');
+    });
+
+    it('should work at 26', () => {
+      assert.equal(encoder.closureName(26), 'A');
+    });
+
+    it('should work at 51', () => {
+      assert.equal(encoder.closureName(51), 'Z');
+    });
+
+    it('should work at 52', () => {
+      assert.equal(encoder.closureName(52), 'ba');
+    });
+  });
 });

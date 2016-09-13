@@ -13,10 +13,49 @@ class Exval {
   }
 
   stringify(val) {
-    const codeMap = new WeakMap(this.codeMap);
-    const codeArr = this.encode(codeMap, val);
+    const encoded = new Map();
+    const closure = new Map();
+    const left = [{
+      count: 1,
+      code: this.encoder.encode(val),
+    }];
+    let i = 0;
 
-    return this.build(codeMap, path);
+    do {
+      const curr = left[i];
+      let code = curr.code;
+      if (!Array.isArray(code)) code = [code];
+
+      for (const item of code) {
+        if (typeof item === 'string') continue;
+
+        let ref = encoded.get(item);
+        if (!ref) {
+          ref = { count: 0, code: null };
+
+          const path = this.codeMap.get(item);
+          if (path) {
+            ref.code = this.encoder.encodePath(path);
+          } else {
+            ref.code = this.encoder.encode(item);
+          }
+
+          left.push(ref);
+          if (i > 100) {
+            left.splice(0, i);
+            i = 0;
+          }
+        } else if (ref.count === 0) {
+          // TODO check for collision with global values on functions
+          closure.set(item, this.encoder.closureName(closure.length));
+        }
+
+        ref.count++;
+        encoded.set(item, ref);
+      }
+    } while (++i < left.length);
+
+    return this.build(closure, encoded, val);
   }
 
   encode(val) {

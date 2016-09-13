@@ -2,6 +2,7 @@ const acorn = require('acorn');
 
 const VALID_MAP_PROP = /^[a-z0-9_$]+$/i;
 const VALID_PROP = /^[a-z_$][a-z0-9_$]*$/i;
+const VAR_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const funcType = new Set([
   'FunctionDeclaration', 'FunctionExpression',
@@ -230,6 +231,20 @@ class Encoder {
     }
 
     return this.encodeObjectData(output, objData);
+  }
+
+  closureName(index) {
+    const chars = [];
+
+    let i = index;
+    do {
+      const pos = (i) % VAR_CHARS.length;
+      i = (i - pos) / VAR_CHARS.length;
+
+      chars.push(VAR_CHARS[pos]);
+    } while (i > 0);
+
+    return chars.reverse().join('');
   }
 
   /** low level **/
