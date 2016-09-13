@@ -1,6 +1,8 @@
 const stream = require('stream');
 const crypto = require('crypto');
-const encoder = require('./encoder');
+
+const Generator = Object.getPrototypeOf(function* f() { return false; }()).constructor;
+// const GeneratorFunction = Object.getPrototypeOf(function* f() { return false; }).constructor;
 
 const nodeIgnore = [
   require.cache,
@@ -25,11 +27,7 @@ const deprecated = new WeakMap([
   ])],
 ]);
 
-class Generator extends WeakMap {
-  static getPropCode(code, propName) {
-    return code ? `${code}${encoder.encodeProp(propName)}` : propName;
-  }
-
+class CodeMap extends WeakMap {
   static getPropValue(obj, propName) {
     try {
       return obj[propName];
@@ -38,13 +36,27 @@ class Generator extends WeakMap {
     }
   }
 
+  static pathCompare(a, b) {
+    if (a.length !== b.length) {
+      return a.length - b.length;
+    }
+
+    const aStr = a.filter(str => typeof str === 'string').join();
+    const bStr = b.filter(str => typeof str === 'string').join();
+
+    return aStr.length - bStr.length;
+  }
+
   constructor(opts = {}) {
     const scan = opts.scan || global;
     super([
-      [scan, opts.path || 'global'],
+      [scan, opts.path || ['global']],
     ]);
 
-    this.sharedObjects = new WeakSet(opts.sharedObjects || []);
+    if (opts.sharedObjects) {
+      opts.sharedObjects.forEach((path, obj) => this.add(obj, path));
+    }
+
     this.scanned = new WeakSet(opts.ignore || []);
 
     if (opts.node !== false) {
@@ -53,15 +65,20 @@ class Generator extends WeakMap {
       }
     }
 
-    this.scan(scan, opts.path);
+    this.scan(scan, opts.path || []);
+
+    if (scan === global) {
+      this.scan(Generator.prototype, '(function*(){})()');
+      // this.scan(GeneratorFunction, 'Object.getPrototypeOf(function*(){}).constructor');
+    }
   }
 
-  add(obj, code) {
-    this.set(obj, code);
+  add(obj, path) {
+    this.set(obj, path);
     this.scanned.add(obj);
   }
 
-  scan(obj, code) {
+  scan(obj, path) {
     if (obj === null) return;
 
     const type = typeof obj;
@@ -69,24 +86,22 @@ class Generator extends WeakMap {
 
     if (!this.scanned.has(obj)) {
       this.scanned.add(obj);
-    } else if (code) {
-      const currCode = this.get(obj);
-      if (!currCode || currCode.length <= code.length) return;
+    } else if (path.length) {
+      const currPath = this.get(obj);
+      if (!currPath || this.constructor.pathCompare(currPath, path) <= 0) return;
     }
 
-    if (code) this.add(obj, code);
+    if (path.length) this.add(obj, path);
 
     const deprecates = deprecated.get(obj);
     Object.getOwnPropertyNames(obj).forEach(propName => {
       if (deprecates && deprecates.has(propName)) return;
 
       const prop = this.constructor.getPropValue(obj, propName);
-      const propCode = this.constructor.getPropCode(code, propName);
-
-      this.scan(prop, propCode);
+      this.scan(prop, path.concat(propName));
     });
   }
 }
 
-module.exports = Generator;
+module.exports = CodeMap;
 

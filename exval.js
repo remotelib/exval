@@ -1,5 +1,5 @@
-const Generator = require('./generator');
-const encoder = require('./encoder');
+const CodeMap = require('./code-map');
+const Encoder = require('./encoder');
 
 // const FUNC_MAX_ARGUMENTS = 2048;
 
@@ -8,13 +8,15 @@ class Exval {
   constructor(opts = {}) {
     if (!(this instanceof Exval)) return new Exval(opts);
 
-    this.codeMap = new Generator(opts);
+    this.codeMap = new CodeMap(opts);
+    this.encoder = new Encoder(opts);
   }
 
   stringify(val) {
-    // TODO handle object refs
+    const codeMap = new WeakMap(this.codeMap);
+    const codeArr = this.encode(codeMap, val);
 
-    return this.encode(val);
+    return this.build(codeMap, path);
   }
 
   encode(val) {
@@ -25,52 +27,23 @@ class Exval {
       case 'object': {
         if (val === null) return 'null';
 
-        const objCode = this.codeMap.get(val);
-        if (objCode) return objCode;
+        const objPath = this.codeMap.get(val);
+        if (objPath) return encoder.encodePath(objPath);
 
-        const obj = encoder.parseObject(val);
-
-        if (obj.isSimple) {
-          const propsStr = obj.props.map(prop => {
-            const propName = encoder.encodeMapProp(prop);
-            const propValue = this.encode(val[prop]);
-            return `${propName}:${propValue}`;
-          });
-
-          return `{${propsStr.join(',')}}`;
+        if (val instanceof Array) {
+          return encoder.encodeArray(val, innerVal => this.encode(innerVal));
         }
 
-        let output;
-        // if (obj instanceof Array) {
-        //   if (encoder.isSimpleArray(val)) {
-        //     output = `[]`
-        //   }
-        //   // if (obj.hasCustomProps)
-        //   // output = `(() => {const a = new Array`
-        // } else {
-        const protoStr = this.encode(obj.prototype);
-        const propsStr = this.encode(obj.customProps);
-
-        output = `Object.create(${protoStr},${propsStr})`;
-        // }
-
-        if (obj.props.length) {
-          obj.props.forEach(prop => {
-            output += `;o${encoder.encodeProp(prop)}=${this.encode(val[prop])}`;
-          });
-          output = `(()=>{const o=${output};return o})()`;
-        }
-
-        return output;
+        return encoder.encodeObject(val, innerVal => this.encode(innerVal));
       }
       case 'undefined': {
         return 'undefined';
       }
       case 'function': {
-        const objCode = this.codeMap.get(val);
-        if (objCode) return objCode;
+        const objPath = this.codeMap.get(val);
+        if (objPath) return objPath;
 
-        return encoder.encodeFunc(val);
+        return encoder.encodeFunc(val, this.saveFuncNames, innerVal => this.encode(innerVal));
       }
       case 'number':
       case 'boolean': {

@@ -1,5 +1,5 @@
 const assert = require('assert');
-const Generator = require('../generator');
+const CodeMap = require('../code-map');
 const { describe, it, before } = global;
 
 let result = null;
@@ -14,10 +14,10 @@ function shouldHaveClass(code) {
   shouldHave(`${code}.prototype`);
 }
 
-describe('generator', () => {
+describe('CodeMap', () => {
   describe('()', () => {
     before(() => {
-      result = new Generator();
+      result = new CodeMap();
     });
 
     it('should be an instance of `WeakMap`', () => {
@@ -42,7 +42,7 @@ describe('generator', () => {
     shouldHave('Math');
     shouldHave('Math.pow');
 
-    // TODO handle mocha globals
+    // TODO handle node libs
     // shouldHave('require');
     // shouldHave('require.resolve');
     // shouldHave('fs');

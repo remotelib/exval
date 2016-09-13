@@ -6,7 +6,7 @@ describe('Simple', () => {
   const exval = new Exval();
 
   function itEval(code, obj = eval(`(${code})`)) {
-    it(`should un-eval \`${code}\``, () => {
+    it(`should output \`${code}\``, () => {
       assert.equal(exval.stringify(obj), code);
     });
   }
@@ -50,13 +50,49 @@ describe('Simple', () => {
     itEval('{foo:undefined}');
   });
 
-  // TODO test array
   describe('Array', () => {
-    // itEval('[]');
-    // itEval('[\'foo\']');
-    // itEval('[1,2,3]');
-    // itEval('new Array(100)');
+    itEval('[]');
+    itEval('[\'foo\']');
+    itEval('[1,2,3]');
+    itEval('new Array(100)');
   });
 
-  // TODO test functions and methods
+  describe('Function', () => {
+    itEval('function(){}');
+    itEval('function(a){return a+a}');
+    itEval('function(a,b={foo:1}){return a+b.foo}');
+  });
+
+  describe('Function*', () => {
+    itEval('function*(){yield 123;}');
+    itEval('function*(a){return a+a}');
+    itEval('function*(a,b={foo:1}){return a+b.foo}');
+  });
+
+  describe('Class', () => {
+    itEval('class{test(){}}');
+    itEval('class{constructor(name){this.name=name}}');
+  });
+
+  describe('Method', () => {
+    itEval('function(){}', (class { m() {} }).prototype.m);
+    itEval('function(){ this.foo = 1; }', (class { m() { this.foo = 1; } }).prototype.m);
+    itEval('function(a){ return a; }', (class { m(a) { return a; } }).prototype.m);
+
+    itEval('function(a,b = 1){ return a + b; }', (class {
+      m(a, b = 1) { return a + b; }
+    }).prototype.m);
+
+    itEval('function*(){ this.foo = 1; }', (class { *test() { this.foo = 1; } }).prototype.test);
+  });
+
+  describe('Method*', () => {
+    itEval('function*(){ yield 1; }', (class { *m() { yield 1; } }).prototype.m);
+    itEval('function*(){ this.foo = 1; }', (class { *m() { this.foo = 1; } }).prototype.m);
+    itEval('function*(a){ return a; }', (class { *m(a) { return a; } }).prototype.m);
+
+    itEval('function*(a,b = 1){ return a + b; }', (class {
+      *m(a, b = 1) { return a + b; }
+    }).prototype.m);
+  });
 });

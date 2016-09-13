@@ -25,12 +25,16 @@ describe('Refs', () => {
     itEval('Map.prototype');
     itEval('Buffer.prototype');
 
-    // itEval('fs'); // TODO fix mocha globals
+    // TODO add node libs
+    // itEval('fs');
   });
 
   describe('Function', () => {
     itEval('Math.pow');
     itEval('Object.prototype.toString');
+    itEval('Object.getPrototypeOf');
+    itEval('(function*(){})().constructor');
+    itEval('(function*(){})().next');
   });
 
   // TODO test multiple refs
