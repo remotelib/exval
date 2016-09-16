@@ -8,25 +8,28 @@ class Exval {
   constructor(opts = {}) {
     if (!(this instanceof Exval)) return new Exval(opts);
 
+    this.opts = Object.assign({}, opts);
     this.codeMap = new CodeMap(opts);
-    this.encoder = new Encoder(opts);
   }
 
   stringify(val) {
-    const encoded = new Map();
-    const closure = new Map();
+    const encoder = new Encoder(this.opts);
+    const valPath = this.codeMap.get(val);
+
     const left = [{
       count: 1,
-      code: this.encoder.encode(val),
+      code: valPath ? encoder.encodePath(valPath) : encoder.encode(val),
     }];
-    let i = 0;
+    const encoded = new Map([
+      [val, left[0]],
+    ]);
 
+    const closureVars = new Set();
+    let i = 0;
     do {
       const curr = left[i];
-      let code = curr.code;
-      if (!Array.isArray(code)) code = [code];
 
-      for (const item of code) {
+      for (const item of curr.code) {
         if (typeof item === 'string') continue;
 
         let ref = encoded.get(item);
@@ -35,9 +38,9 @@ class Exval {
 
           const path = this.codeMap.get(item);
           if (path) {
-            ref.code = this.encoder.encodePath(path);
+            ref.code = encoder.encodePath(path);
           } else {
-            ref.code = this.encoder.encode(item);
+            ref.code = encoder.encode(item);
           }
 
           left.push(ref);
@@ -45,9 +48,8 @@ class Exval {
             left.splice(0, i);
             i = 0;
           }
-        } else if (ref.count === 0) {
-          // TODO check for collision with global values on functions
-          closure.set(item, this.encoder.closureName(closure.length));
+        } else if (ref.count === 1) {
+          closureVars.add(item);
         }
 
         ref.count++;
@@ -55,47 +57,81 @@ class Exval {
       }
     } while (++i < left.length);
 
-    return this.build(closure, encoded, val);
+    const buildCode = this.build(encoded, encoded.get(val));
+    if (!closureVars.size) return buildCode.join('');
+
+    const closureMap = new Map();
+
+    closureMap.set(val, {
+      name: encoder.genClosureVar(),
+      buildCode,
+    });
+
+    for (const obj of closureVars) {
+      closureMap.set(obj, {
+        name: encoder.genClosureVar(),
+        buildCode: this.build(encoded, encoded.get(obj)),
+      });
+    }
+
+    const closure = new Map();
+    this.buildClosureMap(closure, closureMap, val);
+
+    const valData = closure.get(val);
+    let content;
+    if (!valData[2]) {
+      content = valData[1];
+      closure.delete(val);
+    } else {
+      content = valData[0];
+    }
+
+    return encoder.encodeClosure(closure, content);
   }
 
-  encode(val) {
-    switch (typeof val) {
-      case 'string': {
-        return encoder.encodeString(val);
+  build(encoded, ref) {
+    const buildCode = [];
+    ref.code.forEach(item => {
+      if (typeof item === 'string') {
+        buildCode.push(item);
+        return;
       }
-      case 'object': {
-        if (val === null) return 'null';
 
-        const objPath = this.codeMap.get(val);
-        if (objPath) return encoder.encodePath(objPath);
+      const itemRef = encoded.get(item);
+      if (!itemRef) throw new ReferenceError(`Object ${item} not found on the encoded map`);
 
-        if (val instanceof Array) {
-          return encoder.encodeArray(val, innerVal => this.encode(innerVal));
-        }
+      if (itemRef.count > 1) {
+        buildCode.push(item);
+        return;
+      }
 
-        return encoder.encodeObject(val, innerVal => this.encode(innerVal));
-      }
-      case 'undefined': {
-        return 'undefined';
-      }
-      case 'function': {
-        const objPath = this.codeMap.get(val);
-        if (objPath) return objPath;
+      buildCode.push.apply(buildCode, this.build(encoded, itemRef));
+    });
+    return buildCode;
+  }
 
-        return encoder.encodeFunc(val, this.saveFuncNames, innerVal => this.encode(innerVal));
-      }
-      case 'number':
-      case 'boolean': {
-        return val.toString();
-      }
-      case 'symbol': {
-        // TODO add support for Symbols
-        throw new Error('Symbols is currently not supported');
-      }
-      default: {
-        throw new Error(`Unknown var type '${typeof val}'`);
+  buildClosureMap(closure, closureMap, val) {
+    const data = closureMap.get(val);
+    if (!data) throw new ReferenceError(`Object ${val} not found on the closure map`);
+
+    if (data.circular !== undefined) {
+      data.circular = true;
+      return data.name;
+    }
+
+    data.circular = false;
+
+    let buildCode = '';
+    for (const item of data.buildCode) {
+      if (typeof item === 'string') {
+        buildCode += item;
+      } else {
+        buildCode += this.buildClosureMap(closure, closureMap, item);
       }
     }
+
+    closure.set(val, [data.name, buildCode, data.circular]);
+    return data.name;
   }
 }
 

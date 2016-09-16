@@ -54,7 +54,7 @@ class CodeMap extends WeakMap {
     ]);
 
     if (opts.sharedObjects) {
-      opts.sharedObjects.forEach((path, obj) => this.add(obj, path));
+      opts.sharedObjects.forEach((obj, path) => this.add(obj, path));
     }
 
     this.scanned = new WeakSet(opts.ignore || []);
@@ -68,7 +68,7 @@ class CodeMap extends WeakMap {
     this.scan(scan, opts.path || []);
 
     if (scan === global) {
-      this.scan(Generator.prototype, '(function*(){})()');
+      this.scan(Generator.prototype, ['(function*(){})()']);
       // this.scan(GeneratorFunction, 'Object.getPrototypeOf(function*(){}).constructor');
     }
   }

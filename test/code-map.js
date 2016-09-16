@@ -3,9 +3,9 @@ const CodeMap = require('../code-map');
 const { describe, it, before } = global;
 
 let result = null;
-function shouldHave(code, obj = eval(`(${code})`)) {
+function shouldHave(code, obj = eval(`(${code})`), path = code.split('.')) {
   it(`should have \`${code}\``, () => {
-    assert.equal(result.get(obj), code);
+    assert.deepEqual(result.get(obj), path);
   });
 }
 

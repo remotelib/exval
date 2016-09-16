@@ -30,8 +30,8 @@ describe('Simple', () => {
   describe('String', () => {
     itEval('\'Foo\'');
     itEval('\'Foo Bar\'');
-    itEval('\'Foo \\\'Bar\'');
-    itEval('\'Foo \\\'\\\'Bar\'');
+    itEval('"Foo \'Bar"');
+    itEval('"Foo \'\'Bar"');
     itEval('\'Foo "Bar\'');
   });
 
@@ -95,4 +95,6 @@ describe('Simple', () => {
       *m(a, b = 1) { return a + b; }
     }).prototype.m);
   });
+
+  // TODO test symbols
 });

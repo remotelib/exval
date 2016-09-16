@@ -6,9 +6,37 @@ const { describe, it, before } = global;
 let encoder;
 function shouldEncode(tokens, obj = eval(`(${tokens})`), code = tokens) {
   it(`should encode ${code}`, () => {
-    assert.deepEqual(encoder.encode(obj), tokens);
+    assert.deepEqual(encoder.encode(obj), Array.isArray(tokens) ? tokens : [tokens]);
   });
 }
+
+describe('Encoder', () => {
+  describe('.getClosureVar', () => {
+    it('should work at 0', () => {
+      assert.equal(Encoder.getClosureVar(0), 'a');
+    });
+
+    it('should work at 1', () => {
+      assert.equal(Encoder.getClosureVar(1), 'b');
+    });
+
+    it('should work at 25', () => {
+      assert.equal(Encoder.getClosureVar(25), 'z');
+    });
+
+    it('should work at 26', () => {
+      assert.equal(Encoder.getClosureVar(26), 'A');
+    });
+
+    it('should work at 51', () => {
+      assert.equal(Encoder.getClosureVar(51), 'Z');
+    });
+
+    it('should work at 52', () => {
+      assert.equal(Encoder.getClosureVar(52), 'ba');
+    });
+  });
+});
 
 describe('encoder', () => {
   before(() => {
@@ -130,31 +158,5 @@ describe('encoder', () => {
     // TODO test for functions
     // TODO test for classes
     // TODO test for props
-  });
-
-  describe('.closureName', () => {
-    it('should work at 0', () => {
-      assert.equal(encoder.closureName(0), 'a');
-    });
-
-    it('should work at 1', () => {
-      assert.equal(encoder.closureName(1), 'b');
-    });
-
-    it('should work at 25', () => {
-      assert.equal(encoder.closureName(25), 'z');
-    });
-
-    it('should work at 26', () => {
-      assert.equal(encoder.closureName(26), 'A');
-    });
-
-    it('should work at 51', () => {
-      assert.equal(encoder.closureName(51), 'Z');
-    });
-
-    it('should work at 52', () => {
-      assert.equal(encoder.closureName(52), 'ba');
-    });
   });
 });

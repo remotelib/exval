@@ -1,8 +1,13 @@
 const acorn = require('acorn');
 
+// we don't generate unicode vars so we can safely ignore it
+// the only downside is that properties will appeared as `obj['ĦĔĽĻŎ']` instead of `obj.ĦĔĽĻŎ`
 const VALID_MAP_PROP = /^[a-z0-9_$]+$/i;
 const VALID_PROP = /^[a-z_$][a-z0-9_$]*$/i;
+const VALID_VAR = /[a-z_$][\w_$]*/igm;
 const VAR_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+const NATIVE_CODE = /\{\s+\[native code]\s+}$/;
 
 const funcType = new Set([
   'FunctionDeclaration', 'FunctionExpression',
@@ -23,6 +28,26 @@ const propertyDescriptorKeys = new Map([
   ['g', 'get'],
   ['s', 'set'],
 ]);
+
+const reservedWords = [
+  'abstract', 'arguments', 'boolean', 'break', 'byte',
+  'case', 'catch', 'char', 'class', 'const',
+  'continue', 'debugger', 'default', 'delete', 'do',
+  'double', 'else', 'enum*', 'eval', 'export',
+  'extends', 'false', 'final', 'finally', 'float',
+  'for', 'function', 'goto', 'if', 'implements',
+  'import', 'in', 'instanceof', 'int', 'interface',
+  'let', 'long', 'native', 'new', 'null',
+  'package', 'private', 'protected', 'public', 'return',
+  'short', 'static', 'super', 'switch', 'synchronized',
+  'this', 'throw', 'throws', 'transient', 'true',
+  'try', 'typeof', 'var', 'void', 'volatile',
+  'while', 'with', 'yield',
+  // Array 	Date 	eval 	function 	hasOwnProperty
+  //Infinity 	isFinite 	isNaN 	isPrototypeOf 	length
+  // Math 	NaN 	name 	Number 	Object
+  // prototype 	String 	toString 	undefined 	valueOf
+];
 
 const GeneratorFunction = Object.getPrototypeOf(function* f() { return false; }).constructor;
 
@@ -64,18 +89,34 @@ class Encoder {
     return true;
   }
 
+  static getClosureVar(index) {
+    const chars = [];
+
+    let i = index;
+    do {
+      const pos = (i) % VAR_CHARS.length;
+      i = (i - pos) / VAR_CHARS.length;
+
+      chars.push(VAR_CHARS[pos]);
+    } while (i > 0);
+
+    return chars.reverse().join('');
+  }
+
   constructor(opts = {}) {
     this.saveFuncNames = opts.saveFuncNames || false;
+    this.closureVars = new Set(reservedWords);
+    this.closureVarIndex = 0;
   }
 
   encode(val, inner) {
     switch (typeof val) {
       case 'string': {
-        return this.constructor.encodeString(val);
+        return [this.constructor.encodeString(val)];
       }
       case 'object': {
-        if (val === null) return 'null';
-        if (inner) return val;
+        if (val === null) return ['null'];
+        if (inner) return [val];
 
         if (val instanceof Array) {
           return this.encodeArray(val);
@@ -84,24 +125,58 @@ class Encoder {
         return this.encodeObject(val);
       }
       case 'undefined': {
-        return 'undefined';
+        return ['undefined'];
       }
       case 'function': {
-        if (inner) return val;
+        if (inner) return [val];
         return this.encodeFunc(val);
       }
       case 'number':
       case 'boolean': {
-        return val.toString();
+        return [val.toString()];
       }
       case 'symbol': {
         // TODO add support for Symbols
-        throw new Error('Symbols is currently not supported');
+        throw new TypeError('Symbols is currently not supported');
       }
       default: {
-        throw new Error(`Unknown var type '${typeof val}'`);
+        throw new TypeError(`Unknown var type '${typeof val}'`);
       }
     }
+  }
+
+  genClosureVar() {
+    let name;
+    do {
+      name = this.constructor.getClosureVar(this.closureVarIndex++);
+    } while (this.closureVars.has(name));
+
+    this.closureVars.add(name);
+    return name;
+  }
+
+  encodeClosure(closure, content) {
+    let clones = '';
+    const cloneFn = this.genClosureVar();
+
+    const values = Array.from(closure.values()).map(item => {
+      if (!item[2]) return `${item[0]}=${item[1]}`;
+
+      clones += `${cloneFn}(${item[0]},${item[1]});`;
+      return `${item[0]}={}`;
+    }).join(',');
+
+    if (clones) {
+      // TODO handle symbols
+      clones = `,${cloneFn}=function(t,s){` +
+          'Object.setPrototypeOf(t,Object.getPrototypeOf(s));' +
+          'Object.getOwnPropertyNames(s).map(function(n){' +
+            'Object.defineProperty(t,n,Object.getOwnPropertyDescriptor(s,n))' +
+          '})' +
+      `};${clones}`;
+    }
+
+    return `(function(){var ${values}${clones}return ${content}})()`;
   }
 
   encodePath(path) {
@@ -121,9 +196,9 @@ class Encoder {
 
     const tokens = [
       'Object.create(',
-      this.encode(objData.prototype, true),
+      objData.prototype,
       ',',
-      this.encode(objData.customProps, true),
+      objData.customProps,
       ')',
     ];
 
@@ -142,7 +217,7 @@ class Encoder {
       output = ['['];
       obj.forEach((item, i) => {
         if (i > 0) output.push(',');
-        output.push(this.encode(item, true));
+        output.push.apply(output, this.encode(item, true));
       });
       output.push(']');
     } else {
@@ -180,7 +255,7 @@ class Encoder {
       output = [`function${node.generator ? '*' : ''}(${paramsStr})${funcData.body}`];
     } else {
       if (!classType.has(node.type)) {
-        throw new Error(`Invalid function node '${node.type}'`);
+        throw new SyntaxError(`Invalid function node '${node.type}'`);
       }
 
       if (objData.customProps.prototype) {
@@ -191,10 +266,11 @@ class Encoder {
       if (!node.superClass) {
         output = [`class${funcData.body}`];
       } else {
-        const superClass = this.encode(func.prototype, true);
-        output = ['class extends ', superClass, funcData.body];
+        output = ['class extends ', func.prototype, funcData.body];
       }
     }
+
+    funcData.closureVars.forEach(name => this.closureVars.add(name));
 
     if (objData.prototype === Function.prototype
       || objData.prototype === GeneratorFunction.prototype) {
@@ -233,20 +309,6 @@ class Encoder {
     return this.encodeObjectData(output, objData);
   }
 
-  closureName(index) {
-    const chars = [];
-
-    let i = index;
-    do {
-      const pos = (i) % VAR_CHARS.length;
-      i = (i - pos) / VAR_CHARS.length;
-
-      chars.push(VAR_CHARS[pos]);
-    } while (i > 0);
-
-    return chars.reverse().join('');
-  }
-
   /** low level **/
 
   parseObject(obj) {
@@ -280,10 +342,8 @@ class Encoder {
     objData.props.forEach((prop, i) => {
       const propStr = this.constructor.encodeMapProp(prop);
 
-      const propName = i > 0 ? `,${propStr}:` : `${propStr}:`;
-      const propValue = this.encode(objData.obj[prop], true);
-
-      tokens.push(propName, propValue);
+      tokens.push(i > 0 ? `,${propStr}:` : `${propStr}:`);
+      tokens.push.apply(tokens, this.encode(objData.obj[prop], true));
     });
     tokens.push('}');
 
@@ -295,19 +355,17 @@ class Encoder {
     let output = tokens;
 
     if (objData.customPropsLength) {
-      // const propsStr = this.encode(objData.customProps, true);
-      output = ['Object.defineProperties('].concat(output).push(',', objData.customProps, ')');
+      output = ['Object.defineProperties('].concat(output, [',', objData.customProps, ')']);
     }
 
     if (objData.prototype) {
-      // const protoStr = this.encode(objData.prototype, true);
-      output = ['Object.setPrototypeOf('].concat(output).push(',', objData.prototype, ')');
+      output = ['Object.setPrototypeOf('].concat(output, [',', objData.prototype, ')']);
     }
 
     if (!objData.props.length) return output;
 
     const propsObj = this.encodeSimpleObject(objData);
-    return ['Object.assign('].concat(output).push(',', propsObj, ')');
+    return ['Object.assign('].concat(output, [','], propsObj, [')']);
   }
 
   isSimpleArray(arr) {
@@ -329,6 +387,10 @@ class Encoder {
     let exCode;
     let getMethod = false;
 
+    if (NATIVE_CODE.test(code)) {
+      throw new ReferenceError(`Couldn't encode native code "${code}"`);
+    }
+
     try {
       exCode = `(${code})`;
       program = acorn.parse(exCode);
@@ -343,12 +405,12 @@ class Encoder {
     }
 
     if (program.type !== 'Program' || !program.body || !program.body.length) {
-      throw new Error(`Invalid function string (Unexpected '${program.type}')`);
+      throw new SyntaxError(`Invalid function string (Unexpected '${program.type}')`);
     }
 
     const exp = program.body[0];
     if (exp.type !== 'ExpressionStatement') {
-      throw new Error(`Invalid expression (Unexpected '${exp.type}')`);
+      throw new SyntaxError(`Invalid expression (Unexpected '${exp.type}')`);
     }
 
     let node;
@@ -356,17 +418,17 @@ class Encoder {
       const classExp = exp.expression;
 
       if (classExp.type !== 'ClassExpression') {
-        throw new Error('Missing ClassExpression');
+        throw new SyntaxError('Missing ClassExpression');
       }
 
       if (classExp.body.type !== 'ClassBody' || classExp.body.body.length !== 1) {
-        throw new Error('Missing ClassBody');
+        throw new SyntaxError('Missing ClassBody');
       }
 
       const method = classExp.body.body[0];
 
       if (method.type !== 'MethodDefinition' || method.value.type !== 'FunctionExpression') {
-        throw new Error('Missing MethodDefinition');
+        throw new SyntaxError('Missing MethodDefinition');
       }
 
       node = method.value;
@@ -376,9 +438,15 @@ class Encoder {
 
     return {
       node,
+      closureVars: this.getClosureVars(code),
       getCode: n => exCode.substring(n.start, n.end),
       body: exCode.substring(node.body.start, node.body.end),
     };
+  }
+
+  getClosureVars(code) {
+    // TODO replace this with ClosureParser
+    return new Set(code.match(VALID_VAR));
   }
 
   encodeFuncParams(funcData, params) {
@@ -386,7 +454,7 @@ class Encoder {
       if (param.type === 'Identifier') return param.name;
 
       if (param.type !== 'AssignmentPattern') {
-        throw new Error(`Unexpected param type ${param.type}`);
+        throw new SyntaxError(`Unexpected param type ${param.type}`);
       }
 
       return funcData.getCode(param);
