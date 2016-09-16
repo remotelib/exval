@@ -2,7 +2,7 @@ const assert = require('assert');
 const Exval = require('../');
 const { describe, it } = global;
 
-describe('Simple', () => {
+describe('simple', () => {
   const exval = new Exval();
 
   function itEval(code, obj = eval(`(${code})`)) {

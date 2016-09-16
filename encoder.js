@@ -162,7 +162,7 @@ class Encoder {
     const values = Array.from(closure.values()).map(item => {
       if (!item[2]) return `${item[0]}=${item[1]}`;
 
-      clones += `${cloneFn}(${item[0]},${item[1]});`;
+      clones += `;${cloneFn}(${item[0]},${item[1]})`;
       return `${item[0]}={}`;
     }).join(',');
 
@@ -176,7 +176,7 @@ class Encoder {
       `};${clones}`;
     }
 
-    return `(function(){var ${values}${clones}return ${content}})()`;
+    return `function(){var ${values}${clones};return ${content}}()`;
   }
 
   encodePath(path) {
@@ -248,7 +248,7 @@ class Encoder {
     const objData = this.parseObject(func);
     let output;
 
-    if (node.type === 'ArrowFunction') {
+    if (node.type === 'ArrowFunctionExpression') {
       output = [code];
     } else if (funcType.has(node.type)) {
       const paramsStr = this.encodeFuncParams(funcData, node.params);
