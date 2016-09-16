@@ -62,15 +62,16 @@ class Exval {
 
     const closureMap = new Map();
 
-    closureMap.set(val, {
-      name: encoder.genClosureVar(),
-      buildCode,
-    });
-
     for (const obj of closureVars) {
       closureMap.set(obj, {
         name: encoder.genClosureVar(),
         buildCode: this.build(encoded, encoded.get(obj)),
+      });
+    }
+
+    if (!closureMap.has(val)) {
+      closureMap.set(val, {
+        buildCode,
       });
     }
 
@@ -115,6 +116,10 @@ class Exval {
     if (!data) throw new ReferenceError(`Object ${val} not found on the closure map`);
 
     if (data.circular !== undefined) {
+      if (!closure.has(val)) {
+        closure.set(val, null); // order placeholder
+      }
+
       data.circular = true;
       return data.name;
     }
