@@ -19,7 +19,7 @@ this project.
 
 ## Examples
 
-### Object cloning
+### Object Cloning
 
 ```js
 const Exval = require('exval'); // require exval
