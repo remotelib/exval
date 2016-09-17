@@ -120,8 +120,8 @@ obj.obj = obj;
 const output = exval.stringify(obj);
 const obj2 = eval(`(${output})`);
                   
-assert(obj2 !== obj);
-assert.deepEqual(obj2, obj);
+assert(obj2 !== obj); 
+assert(obj2.foo === obj.foo);
 assert(obj2.obj === obj2);
 ```
 
