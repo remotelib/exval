@@ -1,6 +1,6 @@
 {
   "name": "exval",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Allows taking snapshot of JavaScript objects including functions and classes and run it on other machine.",
   "keywords": [
     "uneval",
