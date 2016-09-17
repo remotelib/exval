@@ -17,7 +17,32 @@ If you find a bug, please open an issue or consider contributing to
 this project.
 
 
-## Example
+## Examples
+
+### Object cloning
+
+```js
+const Exval = require('exval'); // require exval
+const exval = new Exval(); // create a new exval instance
+
+const obj = {
+  foo: 'bar',
+  deep: {
+    hello: 'world',
+  },
+  pow: Math.pow,
+};
+
+const output = exval.stringify(obj);
+console.log(output); // {foo:'bar',deep:{hello:'world'},pow:Math.pow}
+
+const obj2 = eval(`(${output})`);
+assert(obj2 !== obj);
+assert(obj2.deep !== obj.deep);
+assert.deepEqual(obj2, obj);
+```
+
+### Class Instance
 
 ```js
 const Exval = require('exval'); // require exval
@@ -61,7 +86,44 @@ assert.equal(c2.counter, 103);
 // the original counter stay the same
 assert.equal(c1.counter, 102);
 ```
+      
+### Multiple References
 
+```js
+const Exval = require('exval'); // require exval
+const exval = new Exval(); // create a new exval instance
+
+const a = { name: 'a' };
+
+const obj = {
+  a1: a,
+  a2: a,
+};
+
+const output = exval.stringify(obj);
+console.log(output); // function(){var a={name:'a'};return {a1:a,a2:a}}()
+
+const obj2 = eval(`(${output})`);
+assert.deepEqual(obj2, obj);
+assert(obj2.a1 === obj2.a2);
+``` 
+     
+### Close Loop References
+
+```js
+const Exval = require('exval'); // require exval
+const exval = new Exval(); // create a new exval instance
+
+const obj = { foo: 'bar' };
+obj.obj = obj;
+
+const output = exval.stringify(obj);
+const obj2 = eval(`(${output})`);
+                  
+assert(obj2 !== obj);
+assert.deepEqual(obj2, obj);
+assert(obj2.obj === obj2);
+```
 
 ## Limitations
 
