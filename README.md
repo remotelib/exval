@@ -38,7 +38,7 @@ const c1 = (() => {
   return new Counter(100);
 }());
 
-// notice that we don't have access to `Counter` class here
+// notice that we didn't define `Counter` class here
 assert.equal(typeof Counter, 'undefined');
   
 // update the counter and add some custom properties
