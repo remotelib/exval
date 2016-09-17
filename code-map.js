@@ -27,6 +27,8 @@ const deprecated = new WeakMap([
   ])],
 ]);
 
+// TODO make this more simple with only one level: obj->prop
+
 class CodeMap extends WeakMap {
   static getPropValue(obj, propName) {
     try {

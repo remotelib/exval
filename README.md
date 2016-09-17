@@ -6,52 +6,47 @@
 [![npm](https://img.shields.io/npm/l/exval.svg)](LICENSE)
 
 
-[exval](https://npmjs.org/package/exval) allows `uneval` JavaScript objects back to source code (including functions and classes!). This allows making shallow copy of an object and recreate it on other machine.
+[exval](https://npmjs.org/package/exval) allows `uneval` JavaScript 
+objects back to source code (including functions and classes!).
+This allows making shallow copy of an object and recreate it on other
+machine.
 
 **WARNING: This library is under development.**
-Many features may not work, throws exceptions or works partly.  If you find a bug, please open an issue or consider contributing to this project.
+Many features may not work, throws exceptions or works partly.
+If you find a bug, please open an issue or consider contributing to 
+this project.
 
 
 ## Example
 
-Consider the following `Counter` class:
-
 ```js
-// File: "counter.js"
-
-class Counter {
-  constructor(init) {
-    this.counter = init;
-  }
-
-  inc(a) {
-    this.counter += a;
-  }
-}
-
-// create a counter instance
-const c1 = new Counter(100);
-
-// update the counter and add some custom properties
-c1.inc(2);
-c1.foo = 'bar';
-
-// export only the counter instance
-module.exports = c1;
-```
-
-Now lets play with *exval*:
-```js
-// File: "index.js"
-
 const Exval = require('exval'); // require exval
-const c1 = require('./counter'); // get `c1` from file "counter.js"
+const exval = new Exval(); // create a new exval instance
 
-// notice that `c1` exists but `Counter` is undefined in this file
+const c1 = (() => {
+  class Counter {
+    constructor(init) {
+      this.counter = init;
+    }
+
+    inc(a) {
+      this.counter += a;
+    }
+  }
+  
+  // create a counter instance
+  const c1 = new Counter(100);
+  
+  // update the counter and add some custom properties
+  c1.inc(2);
+  c1.foo = 'bar';
+
+  return c1;
+}());
+
+// notice that we don't have access to `Counter` class here
 assert.equal(typeof Counter, 'undefined');
 
-// create a new exval instance
-const exval = new Exval();
 
 // generate the counter instance code and run it
 const output = exval.stringify(c1);
@@ -75,8 +70,10 @@ assert.equal(c1.counter, 102);
 
 ### Global Vars
 
-*exvar* will not copy outer scope variables that has been used in your code (including globals and environment variables).
- It's **your responsibility** to make sure that all the globals variables are correctly copied and transferred between your machines.
+*exvar* will not copy outer scope variables that has been used in your 
+code (including globals and environment variables). It's **your 
+responsibility** to make sure that all the globals variables are 
+correctly copied and transferred between your machines.
  
 ```js
 let glob = 1;
@@ -94,7 +91,10 @@ console.log(output); // prints 'function counter() {\nreturn glob++;\n}'
 
 ### Closures
 
-*exvar* [can't access](http://stackoverflow.com/questions/4472529/accessing-variables-trapped-by-closure) variables in your inner closure. Therefore it's **your responsibility** to regenerate them before you can use the generated code.
+*exvar* [can't](http://stackoverflow.com/q/4472529/518153)
+[access](http://stackoverflow.com/a/39429547/518153)
+variables in your inner closure. Therefore it's **your responsibility**
+to regenerate them before you can use the generated code.
  
 ```js
 const inc = (() => {
@@ -108,15 +108,17 @@ console.log(inc()) // "1"
 console.log(typeof counter) // "undefined"
  
 const output = exval.stringify(inc);
+const inc2 = eval(`{$output}`);
 
-console.log(output); // prints '() => counter++'
-                     // notice the lack of the private variable `counter`
+inc2(); // Throws "ReferenceError: counter is not defined"
 ```
 
 
 ### The `supper` Keyword
 
-It's impossible to know a method parent class outside the class context. Therefore, calling methods that using the `super` keyword will fail to run.
+It's impossible to know a method parent class outside the class context.
+Therefore, calling methods that using the `super` keyword will fail to
+run, although `exval`ing the hole class **will works**! 
  
 ```js
 class Foo {
@@ -131,9 +133,12 @@ class FooBar extends Foo {
   }
 }
 
-// create shallow copy of the method `getName` 
-const output = exval.stringify(FooBar.prototype.getName);
-const getFooBarName = eval(`(${output})`); // throws "SyntaxError: 'super' keyword unexpected here"
+// create shallow copy of the hole class will work
+exval.stringify(FooBar);
+
+// create shallow copy of the method `getName`
+// throws "SyntaxError: 'super' keyword unexpected here"
+exval.stringify(FooBar.prototype.getName);
 ```
 
 ## License

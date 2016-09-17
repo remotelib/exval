@@ -1,7 +1,7 @@
 {
   "name": "exval",
   "version": "0.0.1",
-  "description": "Allows uneval JavaScript objects including functions and classes and run it on other machine.",
+  "description": "Allows taking snapshot of JavaScript objects including functions and classes and run it on other machine.",
   "keywords": [
     "uneval",
     "eval",
@@ -12,7 +12,7 @@
     "prototype",
     "shallow",
     "copy",
-    "snippet"
+    "snapshot"
   ],
   "main": "exval.js",
   "engines": {
