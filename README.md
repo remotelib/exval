@@ -209,13 +209,14 @@ instead of `.bind`.
  
 ```js
 function foo(a) { return a + 1; }
+const foo2 = () => foo(2);
 const foo5 = foo.bind(null, 5);
 
-// exval'ing function will works
-exval.stringify(foo); // returns "function(a){ return a + 1; }"
+// exval'ing arrow function will work
+exval.stringify(foo2); // returns "() => foo(2)"
 
 // exval'ing bind function will not work
-// throws: ReferenceError: Couldn't encode native code "function () { [native code] }"
+// throws ReferenceError: Couldn't encode native code "function () { [native code] }"
 exval.stringify(foo5);
 ```
 
