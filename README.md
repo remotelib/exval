@@ -200,6 +200,25 @@ exval.stringify(FooBar);
 exval.stringify(FooBar.prototype.getName);
 ```
 
+
+### Function `.bind`
+
+Binding a function will hide it sourcecode so *exvar* couldn't access
+the original function sourcecode. Please prefer to use [arrow functions](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Functions/Arrow_functions) 
+instead of `.bind`.
+ 
+```js
+function foo(a) { return a + 1; }
+const foo5 = foo.bind(null, 5);
+
+// exval'ing function will works
+exval.stringify(foo); // returns "function(a){ return a + 1; }"
+
+// exval'ing bind function will not work
+// throws: ReferenceError: Couldn't encode native code "function () { [native code] }"
+exval.stringify(foo5);
+```
+
 ## License
 
 [MIT License](LICENSE).
