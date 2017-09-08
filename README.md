@@ -222,6 +222,20 @@ exval.stringify(foo2); // returns "() => foo(2)"
 exval.stringify(foo5);
 ```
 
+### Symbols
+
+Exval currently ignoring object symbols:
+
+```js
+const kFoo = Symbol('foo');
+const obj = {
+  [kFoo]: 'Foo!'
+};
+
+exval.stringify(obj); // returns "{}"
+```
+
+
 ## License
 
 [MIT License](LICENSE).
