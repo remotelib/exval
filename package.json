@@ -1,6 +1,6 @@
 {
   "name": "exval",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Allows taking snapshot of JavaScript objects including functions and classes and run it on other machine.",
   "keywords": [
     "uneval",
@@ -21,7 +21,7 @@
   "scripts": {
     "test": "./node_modules/.bin/mocha"
   },
-  "author": "Moshe Simantov <ms@development.co.il> (https://github.com/moshest)",
+  "author": "Moshe Simantov <hi@moshesimantov.com> (http://www.moshesimantov.com)",
   "license": "MIT",
   "dependencies": {
     "acorn": "^3.3.0"
