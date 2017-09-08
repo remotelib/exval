@@ -11,12 +11,11 @@ objects back to source code (including functions and classes!).
 This allows making shallow copy of an object and recreate it on other
 machine.
 
-**WARNING: This library is under development.**
-Many features may not work, throws exceptions or works partly.
+**This library is under development.**
 If you find a bug, please open an issue or consider contributing to 
 this project.
 
-If you're interested in running JavaScript on a remote machine you should checkout [remote-lib](https://github.com/remotelib/remote-lib) as well.
+If you're interested on running JavaScript on a remote machine you should checkout [remote-lib](https://github.com/remotelib/remote-lib) as well.
 
 
 ## Examples
@@ -224,7 +223,7 @@ exval.stringify(foo5);
 
 ### Symbols
 
-Exval currently ignoring object symbols:
+Exval currently ignoring object's symbols:
 
 ```js
 const kFoo = Symbol('foo');
