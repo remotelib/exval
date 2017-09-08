@@ -1,5 +1,6 @@
 const stream = require('stream');
 const crypto = require('crypto');
+const fs = require('fs');
 
 const Generator = Object.getPrototypeOf(function* f() { return false; }()).constructor;
 // const GeneratorFunction = Object.getPrototypeOf(function* f() { return false; }).constructor;
@@ -8,6 +9,7 @@ const nodeIgnore = [
   require.cache,
   require.extensions,
   require.main,
+  global.async_hooks,
 ];
 
 const deprecated = new WeakMap([
@@ -24,6 +26,9 @@ const deprecated = new WeakMap([
   ])],
   [stream.Stream.Writable.WritableState.prototype, new Set([
     'buffer',
+  ])],
+  [fs, new Set([
+    'SyncWriteStream',
   ])],
 ]);
 
