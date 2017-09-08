@@ -2,7 +2,7 @@
 
 [![build](https://img.shields.io/travis/remotelib/exval.svg?branch=master)](https://travis-ci.org/remotelib/exval)
 [![npm](https://img.shields.io/npm/v/exval.svg)](https://npmjs.org/package/exval)
-[![Join the chat at https://gitter.im/remotelib/exval](https://badges.gitter.im/remotelib/exval.svg)](https://gitter.im/remotelib/exval?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://gitter.im/remotelib/Lobby](https://badges.gitter.im/remotelib/Lobby.svg)](https://gitter.im/remotelib/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![npm](https://img.shields.io/npm/l/exval.svg)](LICENSE)
 
 
