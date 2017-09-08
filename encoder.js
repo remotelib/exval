@@ -292,7 +292,7 @@ class Encoder {
       objData.customPropsLength--;
     }
 
-    if (objData.customProps.name && !this.saveFuncNames || !func.name) {
+    if (objData.customProps.name && (!this.saveFuncNames || !func.name)) {
       delete objData.customProps.name;
       objData.customPropsLength--;
     }
