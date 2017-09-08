@@ -1,8 +1,8 @@
 # exval
 
-[![build](https://img.shields.io/travis/Anternet/exval.svg?branch=master)](https://travis-ci.org/Anternet/exval)
-[![npm](https://img.shields.io/npm/v/exval.svg)](https://npmjs.org/package/anternet)
-[![Join the chat at https://gitter.im/Anternet/exval](https://badges.gitter.im/Anternet/exval.svg)](https://gitter.im/Anternet/exval?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![build](https://img.shields.io/travis/remotelib/exval.svg?branch=master)](https://travis-ci.org/remotelib/exval)
+[![npm](https://img.shields.io/npm/v/exval.svg)](https://npmjs.org/package/exval)
+[![Join the chat at https://gitter.im/remotelib/exval](https://badges.gitter.im/remotelib/exval.svg)](https://gitter.im/remotelib/exval?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![npm](https://img.shields.io/npm/l/exval.svg)](LICENSE)
 
 
@@ -15,6 +15,8 @@ machine.
 Many features may not work, throws exceptions or works partly.
 If you find a bug, please open an issue or consider contributing to 
 this project.
+
+If you're interested in running JavaScript on a remote machine you should checkout [remote-lib](https://github.com/remotelib/remote-lib) as well.
 
 
 ## Examples
